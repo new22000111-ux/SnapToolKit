@@ -4,16 +4,18 @@ public class SnapURLActivity extends BaseActivity {
 
     @Override
     protected void onTextReceived() {
-        if (!selectedText.startsWith("http://") && !selectedText.startsWith("https://")) {
+        String normalized = normalizeUrl(selectedText);
+        if (normalized == null) {
             toast("❌ " + Strings.get("no_valid_url"));
             finish();
             return;
         }
         toast(Strings.get("shortening"));
+        final String finalUrl = normalized;
         new android.os.AsyncTask<Void, Void, String>() {
             protected String doInBackground(Void... v) {
                 try {
-                    String enc = java.net.URLEncoder.encode(selectedText, "UTF-8");
+                    String enc = java.net.URLEncoder.encode(finalUrl, "UTF-8");
                     java.net.HttpURLConnection c = (java.net.HttpURLConnection)
                         new java.net.URL("https://is.gd/create.php?format=simple&url=" + enc)
                             .openConnection();
@@ -33,5 +35,21 @@ public class SnapURLActivity extends BaseActivity {
                 else { toast("❌ " + Strings.get("shorten_error")); finish(); }
             }
         }.execute();
+    }
+
+    String normalizeUrl(String input) {
+        String raw = input.trim();
+        if (raw.isEmpty()) return null;
+        if (!raw.matches("(?i)^https?://.*$")) raw = "https://" + raw;
+        try {
+            java.net.URI uri = new java.net.URI(raw);
+            String scheme = uri.getScheme();
+            String host = uri.getHost();
+            if (scheme == null || host == null || host.trim().isEmpty()) return null;
+            if (!scheme.equalsIgnoreCase("http") && !scheme.equalsIgnoreCase("https")) return null;
+            return uri.toString();
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

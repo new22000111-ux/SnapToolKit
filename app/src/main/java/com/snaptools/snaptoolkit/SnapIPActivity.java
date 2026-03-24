@@ -16,6 +16,15 @@ public class SnapIPActivity extends BaseActivity {
             protected String doInBackground(Void... v) {
                 try {
                     String ip = resolveIp(finalHost);
+                    String reverseHost = reverseLookup(ip);
+
+                    if (isPrivateIp(ip)) {
+                        return "🌐 Host:     " + finalHost + "\n" +
+                               "📡 IP:       " + ip + "\n" +
+                               "🏠 Network:  Private/Local\n" +
+                               "🔁 Reverse:  " + reverseHost + "\n" +
+                               "ℹ️ Geo data is not available for private IP ranges.";
+                    }
 
                     java.net.HttpURLConnection c = (java.net.HttpURLConnection)
                         new java.net.URL("https://ipwho.is/" + ip).openConnection();
@@ -45,6 +54,7 @@ public class SnapIPActivity extends BaseActivity {
 
                     return "🌐 Host:     " + finalHost           + "\n" +
                            "📡 IP:       " + ip                  + "\n" +
+                           "🔁 Reverse:  " + reverseHost         + "\n" +
                            "🏳️ Country:  " + country             + "\n" +
                            "🏙️ City:     " + city                + "\n" +
                            "🗺️ Region:   " + region              + "\n" +
@@ -113,5 +123,37 @@ public class SnapIPActivity extends BaseActivity {
 
     String safe(String s) {
         return s == null || s.trim().isEmpty() ? "—" : s.trim();
+    }
+
+    String reverseLookup(String ip) {
+        try {
+            java.net.InetAddress address = java.net.InetAddress.getByName(ip);
+            String name = address.getCanonicalHostName();
+            if (name == null || name.trim().isEmpty() || name.equals(ip)) return "—";
+            return name;
+        } catch (Exception e) {
+            return "—";
+        }
+    }
+
+    boolean isPrivateIp(String ip) {
+        String v = ip.toLowerCase();
+        if (v.equals("::1") || v.startsWith("fc") || v.startsWith("fd") || v.startsWith("fe80:")) {
+            return true;
+        }
+        if (!v.contains(".")) return false;
+        String[] p = v.split("\\.");
+        if (p.length != 4) return false;
+        try {
+            int a = Integer.parseInt(p[0]);
+            int b = Integer.parseInt(p[1]);
+            return a == 10 ||
+                (a == 192 && b == 168) ||
+                (a == 172 && b >= 16 && b <= 31) ||
+                a == 127 ||
+                (a == 169 && b == 254);
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
