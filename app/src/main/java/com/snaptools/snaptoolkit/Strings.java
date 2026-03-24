@@ -421,10 +421,12 @@ public class Strings {
 
     public static String get(String key) {
         String lang = Locale.getDefault().getLanguage();
-        HashMap<String, String> map = data.containsKey(lang) ? data.get(lang) : data.get("en");
-        if (map == null) map = data.get("en");
-        String val = map.get(key);
-        return val != null ? val : key;
+        HashMap<String, String> map = data.containsKey(lang) ? data.get(lang) : null;
+        HashMap<String, String> en = data.get("en");
+        String val = map != null ? map.get(key) : null;
+        if (val != null) return val;
+        if (en != null && en.containsKey(key)) return en.get(key);
+        return key;
     }
 
     private static void add(String lang, String[][] pairs) {

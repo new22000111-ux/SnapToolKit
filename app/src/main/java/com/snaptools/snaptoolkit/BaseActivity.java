@@ -39,7 +39,11 @@ public abstract class BaseActivity extends android.app.Activity {
     protected void copyToClipboard(String text) {
         android.content.ClipboardManager cm =
             (android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-        cm.setPrimaryClip(android.content.ClipData.newPlainText("snap", text));
+        if (cm != null) {
+            cm.setPrimaryClip(android.content.ClipData.newPlainText("snap", text));
+        } else {
+            toast("❌ " + Strings.get("error"));
+        }
     }
 
     protected void toast(String msg) {

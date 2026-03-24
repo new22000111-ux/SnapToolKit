@@ -9,7 +9,7 @@ public class SnapCountActivity extends BaseActivity {
         int words     = selectedText.trim().isEmpty() ? 0
                         : selectedText.trim().split("\\s+").length;
         int lines     = selectedText.split("\n", -1).length;
-        int sentences = selectedText.split("[.!?]+", -1).length - 1;
+        int sentences = countSentences(selectedText);
 
         String msg =
             "📝  Words:      " + words      + "\n" +
@@ -20,5 +20,15 @@ public class SnapCountActivity extends BaseActivity {
 
         showDialog("🔢 SnapCount", msg,
             Strings.get("close"), null, null);
+    }
+
+    int countSentences(String text) {
+        java.util.regex.Matcher m = java.util.regex.Pattern
+            .compile("[.!?]+")
+            .matcher(text);
+        int count = 0;
+        while (m.find()) count++;
+        if (count == 0 && !text.trim().isEmpty()) return 1;
+        return count;
     }
 }
