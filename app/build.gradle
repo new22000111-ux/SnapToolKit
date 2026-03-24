@@ -1,0 +1,12 @@
+apply plugin: 'com.android.application'
+android {
+    compileSdkVersion 33
+    defaultConfig {
+        applicationId "com.snaptools.snaptoolkit"
+        minSdkVersion 23
+        targetSdkVersion 33
+        versionCode 2
+        versionName "1.1"
+    }
+}
+dependencies {}
