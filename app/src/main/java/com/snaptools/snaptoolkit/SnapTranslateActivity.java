@@ -17,33 +17,24 @@ public class SnapTranslateActivity extends BaseActivity {
                         new java.net.URL(apiUrl).openConnection();
                     c.setConnectTimeout(8000);
                     c.setReadTimeout(8000);
+                    c.setRequestProperty("User-Agent", "SnapToolKit/1.0");
 
                     int code = c.getResponseCode();
-                    if (code != 200) return null;
+                    if (code != 200) {
+                        c.disconnect();
+                        return null;
+                    }
 
-                    java.io.BufferedReader r = new java.io.BufferedReader(
-                        new java.io.InputStreamReader(c.getInputStream(), "UTF-8"));
-                    StringBuilder sb = new StringBuilder();
-                    String line;
-                    while ((line = r.readLine()) != null) sb.append(line);
-                    r.close(); c.disconnect();
+                    String json = readAll(c.getInputStream());
+                    c.disconnect();
 
-                    String json = sb.toString();
-                    // Parse translatedText from JSON
-                    int start = json.indexOf("\"translatedText\":\"");
-                    if (start < 0) return null;
-                    start += 18;
-                    int end = json.indexOf("\"", start);
-                    if (end < 0) return null;
+                    org.json.JSONObject root = new org.json.JSONObject(json);
+                    org.json.JSONObject data = root.optJSONObject("responseData");
+                    if (data == null) return null;
 
-                    String translated = json.substring(start, end);
-                    // Unescape common sequences
-                    translated = translated
-                        .replace("\\n", "\n")
-                        .replace("\\t", "\t")
-                        .replace("\\\"", "\"")
-                        .replace("\\'", "'")
-                        .replace("\\\\", "\\");
+                    String translated = data.optString("translatedText", "").trim();
+                    if (translated.isEmpty()) return null;
+                    translated = decodeEntities(translated);
 
                     // MyMemory returns "MYMEMORY WARNING" on quota exceed
                     if (translated.contains("MYMEMORY WARNING")) return null;
@@ -56,5 +47,22 @@ public class SnapTranslateActivity extends BaseActivity {
                 else { toast("❌ " + Strings.get("translate_error")); finish(); }
             }
         }.execute();
+    }
+
+    private String readAll(java.io.InputStream is) throws Exception {
+        java.io.BufferedReader r = new java.io.BufferedReader(
+            new java.io.InputStreamReader(is, "UTF-8"));
+        StringBuilder sb = new StringBuilder();
+        String line;
+        while ((line = r.readLine()) != null) sb.append(line);
+        r.close();
+        return sb.toString();
+    }
+
+    private String decodeEntities(String text) {
+        if (android.os.Build.VERSION.SDK_INT >= 24) {
+            return android.text.Html.fromHtml(text, android.text.Html.FROM_HTML_MODE_LEGACY).toString();
+        }
+        return android.text.Html.fromHtml(text).toString();
     }
 }

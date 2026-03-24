@@ -4,12 +4,7 @@ public class SnapIPActivity extends BaseActivity {
 
     @Override
     protected void onTextReceived() {
-        // Clean input: remove protocol and path
-        String host = selectedText
-            .replaceAll("https?://", "")
-            .split("/")[0]
-            .split("\\?")[0]
-            .trim();
+        String host = extractHost(selectedText);
 
         if (host.isEmpty()) {
             toast("❌ " + Strings.get("ip_error")); finish(); return;
@@ -20,40 +15,41 @@ public class SnapIPActivity extends BaseActivity {
         new android.os.AsyncTask<Void, Void, String>() {
             protected String doInBackground(Void... v) {
                 try {
-                    // Resolve to IP
-                    String ip = java.net.InetAddress.getByName(finalHost).getHostAddress();
+                    String ip = resolveIp(finalHost);
 
                     java.net.HttpURLConnection c = (java.net.HttpURLConnection)
-                        new java.net.URL("https://ipapi.co/" + ip + "/json/").openConnection();
+                        new java.net.URL("https://ipwho.is/" + ip).openConnection();
                     c.setConnectTimeout(8000);
                     c.setReadTimeout(8000);
                     c.setRequestProperty("User-Agent", "SnapToolKit/1.0");
 
                     if (c.getResponseCode() != 200) {
-                        // Fallback: basic info only
+                        c.disconnect();
                         return "🌐 Host: " + finalHost + "\n📡 IP: " + ip;
                     }
 
-                    java.io.BufferedReader r = new java.io.BufferedReader(
-                        new java.io.InputStreamReader(c.getInputStream(), "UTF-8"));
-                    StringBuilder sb = new StringBuilder();
-                    String line;
-                    while ((line = r.readLine()) != null) sb.append(line);
-                    r.close(); c.disconnect();
-
-                    String json = sb.toString();
-                    // Check for API error
-                    if (json.contains("\"error\": true")) {
+                    String json = readAll(c.getInputStream());
+                    c.disconnect();
+                    org.json.JSONObject root = new org.json.JSONObject(json);
+                    if (!root.optBoolean("success", false)) {
                         return "🌐 Host: " + finalHost + "\n📡 IP: " + ip;
                     }
+
+                    org.json.JSONObject conn = root.optJSONObject("connection");
+                    org.json.JSONObject tz = root.optJSONObject("timezone");
+                    String country = safe(root.optString("country", ""));
+                    String city = safe(root.optString("city", ""));
+                    String region = safe(root.optString("region", ""));
+                    String isp = conn != null ? safe(conn.optString("isp", "")) : "—";
+                    String timezone = tz != null ? safe(tz.optString("id", "")) : "—";
 
                     return "🌐 Host:     " + finalHost           + "\n" +
                            "📡 IP:       " + ip                  + "\n" +
-                           "🏳️ Country:  " + val(json,"country_name") + "\n" +
-                           "🏙️ City:     " + val(json,"city")    + "\n" +
-                           "🗺️ Region:   " + val(json,"region")  + "\n" +
-                           "🏢 ISP:      " + val(json,"org")     + "\n" +
-                           "🕐 Timezone: " + val(json,"timezone");
+                           "🏳️ Country:  " + country             + "\n" +
+                           "🏙️ City:     " + city                + "\n" +
+                           "🗺️ Region:   " + region              + "\n" +
+                           "🏢 ISP:      " + isp                 + "\n" +
+                           "🕐 Timezone: " + timezone;
 
                 } catch (java.net.UnknownHostException e) {
                     return "❌ Cannot resolve: " + finalHost;
@@ -75,12 +71,47 @@ public class SnapIPActivity extends BaseActivity {
         }.execute();
     }
 
-    String val(String json, String key) {
-        String search = "\"" + key + "\": \"";
-        int s = json.indexOf(search);
-        if (s < 0) return "—";
-        s += search.length();
-        int e = json.indexOf("\"", s);
-        return (e > s) ? json.substring(s, e) : "—";
+    String extractHost(String input) {
+        String raw = input.trim();
+        if (raw.isEmpty()) return "";
+        try {
+            String normalized = raw.contains("://") ? raw : "http://" + raw;
+            java.net.URI uri = new java.net.URI(normalized);
+            String host = uri.getHost();
+            if (host == null) return raw.split("/")[0].trim();
+            return host.trim();
+        } catch (Exception e) {
+            return raw.split("/")[0].trim();
+        }
+    }
+
+    String resolveIp(String hostOrIp) throws Exception {
+        try {
+            java.net.InetAddress literal = java.net.InetAddress.getByName(hostOrIp);
+            if (literal.getHostAddress() != null && hostOrIp.equalsIgnoreCase(literal.getHostAddress())) {
+                return literal.getHostAddress();
+            }
+        } catch (Exception ignored) {}
+
+        java.net.InetAddress[] addresses = java.net.InetAddress.getAllByName(hostOrIp);
+        for (java.net.InetAddress addr : addresses) {
+            if (!addr.isLoopbackAddress()) return addr.getHostAddress();
+        }
+        if (addresses.length > 0) return addresses[0].getHostAddress();
+        throw new java.net.UnknownHostException(hostOrIp);
+    }
+
+    String readAll(java.io.InputStream is) throws Exception {
+        java.io.BufferedReader r = new java.io.BufferedReader(
+            new java.io.InputStreamReader(is, "UTF-8"));
+        StringBuilder sb = new StringBuilder();
+        String line;
+        while ((line = r.readLine()) != null) sb.append(line);
+        r.close();
+        return sb.toString();
+    }
+
+    String safe(String s) {
+        return s == null || s.trim().isEmpty() ? "—" : s.trim();
     }
 }

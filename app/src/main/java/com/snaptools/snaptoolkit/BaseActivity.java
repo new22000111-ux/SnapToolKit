@@ -29,17 +29,28 @@ public abstract class BaseActivity extends android.app.Activity {
             android.content.Intent i = new android.content.Intent();
             i.putExtra(android.content.Intent.EXTRA_PROCESS_TEXT, result);
             setResult(RESULT_OK, i);
+            finish();
         } else {
-            copyToClipboard(result);
-            toast(Strings.get("copied") + ": " + result);
+            boolean copied = copyToClipboard(result);
+            if (copied) {
+                toast(Strings.get("copied") + ": " + result);
+                finish();
+            } else {
+                showDialog("✅ Result", result, Strings.get("close"), null, null);
+            }
         }
-        finish();
     }
 
-    protected void copyToClipboard(String text) {
+    protected boolean copyToClipboard(String text) {
         android.content.ClipboardManager cm =
             (android.content.ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-        cm.setPrimaryClip(android.content.ClipData.newPlainText("snap", text));
+        if (cm != null) {
+            cm.setPrimaryClip(android.content.ClipData.newPlainText("snap", text));
+            return true;
+        } else {
+            toast("❌ " + Strings.get("error"));
+            return false;
+        }
     }
 
     protected void toast(String msg) {
