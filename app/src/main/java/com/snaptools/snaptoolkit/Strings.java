@@ -37,6 +37,19 @@ public class Strings {
             {"convert_error",   "Conversion failed"},
             {"no_valid_url",    "Not a valid URL"},
             {"words",           "Words"},
+            {"assist_translate", "Translate"},
+            {"assist_copy",      "Copy"},
+            {"assist_count",     "Count"},
+            {"assist_hash",      "Hash"},
+            {"assist_url",       "URL"},
+            {"assist_ip",        "IP"},
+            {"assist_qr",        "QR"},
+            {"assist_screenshot", "Screenshot"},
+            {"assist_ocr_empty", "No visible text found on screen"},
+            {"assist_screenshot_taking", "Taking screenshot..."},
+            {"assist_screenshot_saved", "Screenshot saved to Pictures/SnapToolKit"},
+            {"assist_screenshot_failed", "Screenshot capture failed"},
+            {"assist_screenshot_unsupported", "Screenshot requires Android 11 or newer"},
         });
 
         // Arabic
@@ -68,6 +81,19 @@ public class Strings {
             {"convert_error",   "فشل التحويل"},
             {"no_valid_url",    "ليس رابطاً صحيحاً"},
             {"words",           "كلمات"},
+            {"assist_translate", "ترجمة"},
+            {"assist_copy",      "نسخ"},
+            {"assist_count",     "إحصاء"},
+            {"assist_hash",      "تجزئة"},
+            {"assist_url",       "رابط"},
+            {"assist_ip",        "IP"},
+            {"assist_qr",        "QR"},
+            {"assist_screenshot", "لقطة شاشة"},
+            {"assist_ocr_empty", "لم يتم العثور على نص ظاهر على الشاشة"},
+            {"assist_screenshot_taking", "جارٍ التقاط لقطة الشاشة..."},
+            {"assist_screenshot_saved", "تم حفظ اللقطة في Pictures/SnapToolKit"},
+            {"assist_screenshot_failed", "فشل التقاط لقطة الشاشة"},
+            {"assist_screenshot_unsupported", "التقاط الشاشة يتطلب Android 11 أو أحدث"},
         });
 
         // French
