@@ -1,7 +1,7 @@
 name: Build APK
 on:
   push:
-    branches: [ main ]
+    branches: [ codex/add-snapassistservice-with-features-n09uhh ]
   workflow_dispatch:
 jobs:
   build:
